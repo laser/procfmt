@@ -4,6 +4,9 @@ feedbin_clock: bundle exec clockwork lib/clock.rb
 # launch Sidekiq daemon
 feedbin_jobs: DB_URL=$DB_URL bundle exec sidekiq --config sdk/dev.yml EXEC_POOL=/tmp/sidekiq.pool
 
+# heartbeat job
+heartbeat:   env LOG_LEVEL=debug QTY_MSG=60 HEARTBEAT_SCHEDULE='*/1 * * * *' HEARTBEAT_DESTINATIONS=heartbeat.diagnostic heartbeat-svc
+
 # Rails process
 feedbin_css: bin/rails tailwindcss:watch
 
