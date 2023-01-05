@@ -2,7 +2,7 @@
 feedbin_clock: bundle exec clockwork lib/clock.rb
 
 # launch Sidekiq daemon
-feedbin_jobs: DB_URL=$DB_URL bundle exec sidekiq --config sdk/dev.yml EXEC_POOL=/tmp/sidekiq.pool
+feedbin_jobs:         env DB_URL=$DB_URL bundle exec sidekiq --config sdk/dev.yml EXEC_POOL=/tmp/sidekiq.pool
 
 # Rails process
 feedbin_css: bin/rails tailwindcss:watch
