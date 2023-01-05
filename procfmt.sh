@@ -25,7 +25,7 @@ lines=$(cat)
 # compute the longest process type, ignoring anything in our ignore-list
 process_type_max_width=0
 while IFS= read -r line; do
-  if [[ $line == *:* ]] && [[ ! $line == \#* ]] && [[ ! $ignored_process_types == *"${line%%:*}"* ]]; then
+  if [[ $line == *:* ]] && [[ ! $line == \#* ]] && [[ ! $ignored_process_types == "${line%%:*}" ]]; then
     left=${line%%:*}
 
     if [ ${#left} -gt $process_type_max_width ]; then
@@ -43,7 +43,7 @@ while IFS= read -r line; do
   fi
 
   # pass through lines with a process type that's in our ignore list
-  if [[ -n $ignored_process_types ]] && [[ $ignored_process_types == *"${line%%:*}"* ]]; then
+  if [[ -n $ignored_process_types ]] && [[ $ignored_process_types == "${line%%:*}" ]]; then
     echo "$line"
     continue
   fi
