@@ -80,9 +80,32 @@ while IFS= read -r line; do
   # alpha-sort the environment variable list so that ["FOO=1", "BAR=2"] becomes ["BAR=2", "FOO=1"]
   IFS=" " read -r -a sorted_environment_variables <<< "$(echo "${environment_variables[@]}" | sort)"
 
+  # strip 'env' command out of the list, if present
+  delete=(env)
+  env_found=0
+  for target in "${delete[@]}"; do
+    for i in "${!others[@]}"; do
+      if [[ ${others[i]} = $target ]]; then
+        unset 'others[i]'
+        env_found=1
+      fi
+    done
+  done
+
   # glue our parts back together and write to stdout
   left="${parts[0]}:$(printf '%*s' $((process_type_max_width - ${#parts[0]} + 1)) '')"
-  right="${others[@]} ${sorted_environment_variables[@]}"
+
+  # if 'env' was present, put it in the right place
+  prefix=""
+  if [[ $env_found -eq 1 ]]; then
+    prefix="env "
+  fi
+
+  if [[ ${#sorted_environment_variables} -eq 0 ]]; then
+      right="${prefix}${others[@]}"
+  else
+      right="${prefix}${sorted_environment_variables[@]} ${others[@]}"
+  fi
 
   echo "${left}${right}"
 done < <(printf '%s\n' "$lines")
