@@ -1,13 +1,16 @@
 # run the clock
-feedbin_clock: bundle exec clockwork lib/clock.rb 
+feedbin_clock: bundle exec clockwork lib/clock.rb
 
 # launch Sidekiq daemon
-feedbin_jobs:  bundle exec sidekiq --config sdk/dev.yml DB_URL=$DB_URL EXEC_POOL=/tmp/sidekiq.pool
+feedbin_jobs:  env DB_URL=$DB_URL EXEC_POOL=/tmp/sidekiq.pool bundle exec sidekiq --config sdk/dev.yml
+
+# launch heartbeat
+cron_emitter:  env SCHEDULE='*/1 * * * *' USE_DATABASE=true ZMODULE=yes heartbeat
 
 # Rails process
-feedbin_css: bin/rails tailwindcss:watch
+feedbin_css:   bin/rails tailwindcss watch
 
 # Resque daemons
-worker_alpha:  rake resque work QUEUE=medium,low PCOUNT_MAX=32
-worker_beta:   rake resque work QUEUE=high
-worker_kappa:  rake resque work QUEUE=urgent
+worker_alpha:  PCOUNT_MAX=32 QUEUE=medium,low rake resque work
+worker_beta:   QUEUE=high rake resque work
+worker_kappa:  QUEUE=urgent rake resque work

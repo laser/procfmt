@@ -1,5 +1,49 @@
 #!/usr/bin/env bash
 
+set -f
+
+parse() {
+  local input="$1"
+  local d=""
+  local stack=""
+
+  # reset global
+  parse_output=()
+
+  for (( i=0; i<${#input}; i++ )); do
+    local char="${input:i:1}"
+
+    if [ "$char" == "'" ]; then
+      stack+="$char"
+
+      if [ -z "$d" ]; then
+        d="'"
+        continue
+      fi
+
+      parse_output=("${parse_output[@]}" "$stack")
+      stack=""
+      d=""
+      continue
+    fi
+
+    if [ -z "$d" ] && [ "$char" == " " ]; then
+      if [ -n "$stack" ]; then
+        parse_output=("${parse_output[@]}" "$stack")
+      fi
+
+      stack=""
+      continue
+    fi
+
+    stack+="$char"
+  done
+
+  if [ -n "$stack" ]; then
+    parse_output=("${parse_output[@]}" "$stack")
+  fi
+}
+
 ignored_process_types=""
 
 while [[ $# -gt 0 ]]; do
@@ -61,8 +105,8 @@ while IFS= read -r line; do
   command=${parts[@]:1}
   command=${command//+([[:blank:]])/ }
 
-  # iterate over each space-delimited element in the command, e.g. ["bundle", "exec", "rake", "TERM_CHILD=1"]
-  for part in $command; do
+  parse "${command}"
+  for part in "${parse_output[@]}"; do
     if [[ $part == *"="* ]]; then
       IFS='=' read -ra chunks <<< "$part"
 
@@ -78,7 +122,7 @@ while IFS= read -r line; do
   done
 
   # alpha-sort the environment variable list so that ["FOO=1", "BAR=2"] becomes ["BAR=2", "FOO=1"]
-  IFS=" " read -r -a sorted_environment_variables <<< "$(echo "${environment_variables[@]}" | sort)"
+  sorted_environment_variables=($(printf '%s\n' "${environment_variables[@]}"|sort))
 
   # strip 'env' command out of the list, if present
   delete=(env)
