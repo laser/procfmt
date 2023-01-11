@@ -120,7 +120,7 @@ while IFS= read -r line; do
 
     others+=("$part")
   done
-  
+
   # alpha-sort the environment variable list so that ["FOO=1", "BAR=2"] becomes ["BAR=2", "FOO=1"]
   sorted_environment_variables=($(printf '%s\n' "${environment_variables[@]}"|sort))
 
