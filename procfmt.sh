@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -f
+
 ignored_process_types=""
 
 while [[ $# -gt 0 ]]; do
