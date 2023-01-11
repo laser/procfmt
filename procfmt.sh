@@ -105,51 +105,47 @@ while IFS= read -r line; do
   command=${parts[@]:1}
   command=${command//+([[:blank:]])/ }
 
+  # parse into chunks
   parse "${command}"
+
+  prefix=()
+  sortables=()
+  suffix=()
+
+  sort_mode=1
   for part in "${parse_output[@]}"; do
-    if [[ $part == *"="* ]]; then
-      IFS='=' read -ra chunks <<< "$part"
+    # if someone's using env, they almost certainly want it first
+    if [[ $part == "env" ]]; then
+      prefix+=("$part")
+      continue
+    fi
 
-      consider="${chunks[0]//_/}"
-
-      if [[ ${consider} =~ ^[[:upper:]]+$ ]]; then
-        environment_variables+=("$part")
+    # if we think it's an environment variable, throw it into the array of
+    # things to sort
+    IFS='=' read -ra chunks <<< "$part"
+    if [[ "${chunks[0]//_/}" =~ ^[[:upper:]]+$ ]]; then
+      if [[ $sort_mode -eq 1 ]]; then
+        sortables+=("$part")
         continue
       fi
     fi
 
-    others+=("$part")
+    # if we hit this point, we're probably working with the command and its
+    # flags; don't sort anything from hereon out
+    sort_mode=0
+    suffix+=("$part")
   done
 
   # alpha-sort the environment variable list so that ["FOO=1", "BAR=2"] becomes ["BAR=2", "FOO=1"]
-  sorted_environment_variables=($(printf '%s\n' "${environment_variables[@]}"|sort))
-
-  # strip 'env' command out of the list, if present
-  delete=(env)
-  env_found=0
-  for target in "${delete[@]}"; do
-    for i in "${!others[@]}"; do
-      if [[ ${others[i]} = $target ]]; then
-        unset 'others[i]'
-        env_found=1
-      fi
-    done
-  done
+  sorted=($(printf '%s\n' "${sortables[@]}"|sort))
 
   # glue our parts back together and write to stdout
-  left="${parts[0]}:$(printf '%*s' $((process_type_max_width - ${#parts[0]} + 1)) '')"
+  head="${parts[0]}:$(printf '%*s' $((process_type_max_width - ${#parts[0]} + 1)) '')"
 
-  # if 'env' was present, put it in the right place
-  prefix=""
-  if [[ $env_found -eq 1 ]]; then
-    prefix="env "
-  fi
+  # concatenate all three arrays together
+  concat=($(echo ${prefix[*]}) $(echo ${sorted[*]}) $(echo ${suffix[*]}))
 
-  if [[ ${#sorted_environment_variables} -eq 0 ]]; then
-      right="${prefix}${others[@]}"
-  else
-      right="${prefix}${sorted_environment_variables[@]} ${others[@]}"
-  fi
+  tail="${concat[@]}"
 
-  echo "${left}${right}"
+  echo "${head}${tail}"
 done < <(printf '%s\n' "$lines")
