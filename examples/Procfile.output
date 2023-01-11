@@ -11,6 +11,6 @@ cron_emitter:  env SCHEDULE='*/1 * * * *' USE_DATABASE=true ZMODULE=yes heartbea
 feedbin_css:   bin/rails tailwindcss watch
 
 # Resque daemons
-worker_alpha:  PCOUNT_MAX=32 QUEUE=medium,low rake resque work
-worker_beta:   QUEUE=high rake resque work
-worker_kappa:  QUEUE=urgent rake resque work
+worker_alpha:  rake resque:work QUEUE=medium,low PCOUNT_MAX=32
+worker_beta:   rake resque:work QUEUE=high
+worker_kappa:  rake resque:work QUEUE=urgent
